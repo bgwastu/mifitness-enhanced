@@ -35,17 +35,17 @@ jobs:
       - name: Prepare APK artifact
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/mifitness-notrack.apk
+          cp app/build/outputs/apk/release/app-release.apk dist/mifitness-enhanced.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mifitness-notrack
-          path: dist/mifitness-notrack.apk
+          name: mifitness-enhanced
+          path: dist/mifitness-enhanced.apk
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/mifitness-notrack.apk
+          files: dist/mifitness-enhanced.apk
           generate_release_notes: true

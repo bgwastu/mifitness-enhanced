@@ -1,4 +1,4 @@
-package net.wastu.mifitness.notrack;
+package net.wastu.mifitness.enhanced;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,17 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
-import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
-public class HookEntry implements IXposedHookLoadPackage {
+final class NoTrackHooks {
 
-    private static final String TAG = "[MiFitnessNoTrack] ";
-    private static final String TARGET_PKG = "com.xiaomi.wearable";
+    private static final String TAG = "[MiFitnessEnhanced/NoTrack] ";
 
     private static final Set<String> BLOCKED_TABLES = new HashSet<>(Arrays.asList(
             "events",
@@ -45,25 +42,20 @@ public class HookEntry implements IXposedHookLoadPackage {
             "app.monetrack.com"
     );
 
-    @Override
-    public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if (!TARGET_PKG.equals(lpparam.packageName)) {
-            return;
-        }
-
-        XposedBridge.log(TAG + "Initializing privacy hooks for " + lpparam.packageName + " (process: " + lpparam.processName + ")");
+    static void install(ClassLoader classLoader) {
+        NoTrackHooks hooks = new NoTrackHooks();
 
         // Layer 1 & 2: Xiaomi OneTrack Public API & Built-in Kill Switch
-        hookOneTrack(lpparam.classLoader);
+        hooks.hookOneTrack(classLoader);
 
         // Layer 3: Android OS Framework - SQLite Database Choke Point (100% update-proof)
-        hookDatabaseStorage();
+        hooks.hookDatabaseStorage();
 
         // Layer 4: Android OS Framework - Network Host Resolution Choke Point
-        hookNetworkResolution();
+        hooks.hookNetworkResolution();
 
         // Layer 5: Third-party Trackers (Firebase, Facebook, Sentry)
-        hookThirdPartyAnalytics(lpparam.classLoader);
+        hooks.hookThirdPartyAnalytics(classLoader);
     }
 
     private void hookOneTrack(ClassLoader classLoader) {
@@ -165,7 +157,7 @@ public class HookEntry implements IXposedHookLoadPackage {
                             String lowerHost = host.toLowerCase();
                             for (String pattern : BLOCKED_HOST_PATTERNS) {
                                 if (lowerHost.equals(pattern) || lowerHost.endsWith("." + pattern)) {
-                                    throw new UnknownHostException("Blocked by MiFitnessNoTrack: " + host);
+                                    throw new UnknownHostException("Blocked by MiFitnessEnhanced: " + host);
                                 }
                             }
                         }

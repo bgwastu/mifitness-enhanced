@@ -13,5 +13,5 @@ dependencyResolutionManagement {
         maven { url 'https://api.xposed.info/' }
     }
 }
-rootProject.name = "mifitness-notrack"
+rootProject.name = "mifitness-enhanced"
 include ':app'

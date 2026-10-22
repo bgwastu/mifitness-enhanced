@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">Mi Fitness NoTrack</string>
-    <string name="xposed_description">Neutralizes Xiaomi OneTrack and telemetry in Mi Fitness (com.xiaomi.wearable)</string>
+    <string name="app_name">Mi Fitness Enhanced</string>
+    <string name="xposed_description">Mi Fitness (com.xiaomi.wearable): blocks OneTrack telemetry, rings the band for Google Clock alarms, and skips silent notifications</string>
 </resources>
