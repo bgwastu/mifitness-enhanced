@@ -3,7 +3,7 @@
 An Xposed/LSPosed/Vector module for Xiaomi Mi Fitness (`com.xiaomi.wearable`) that:
 
 1. **Blocks telemetry** — neutralizes Xiaomi's `OneTrack` analytics framework and third-party trackers (formerly `mifitness-notrack`).
-2. **Rings the band for Google Clock alarms** — Mi Fitness only forwards phone alarms from Xiaomi's own clock. This bridges Google Clock (`com.google.android.deskclock`) into Mi Fitness's built-in phone-alarm feature, including snooze/dismiss in both directions.
+2. **Rings the band for Google Clock alarms and finished timers** — Mi Fitness only forwards phone alarms from Xiaomi's own clock. This bridges Google Clock (`com.google.android.deskclock`) into Mi Fitness's built-in phone-alarm feature, including snooze/dismiss in both directions.
 3. **Skips silent notifications** — notifications Android shows as *Silent* (channel importance Low/Min) are not mirrored to the band.
 
 ## Google Clock alarm bridge
@@ -11,7 +11,7 @@ Mi Fitness has a native "phone alarm alerts on band" feature (`AlarmConsoleServi
 
 The module watches Mi Fitness's notification listener for Google Clock's full-screen alarm notification and calls `AlarmConsoleService` directly:
 * Alarm rings on phone → band rings with the alarm label.
-* Snooze/dismiss on the band → the matching action on Google Clock's notification is fired.
+* Snooze/dismiss on the band → the matching action on Google Clock's notification is fired (for timers, snooze = "Add 1 min").
 * Stop/snooze on the phone (notification removed) → band stops ringing.
 
 Requires the *Alarm → phone alarm alert* switch to be enabled in Mi Fitness's device settings (it is stored as `KEY_SYNC_MIUI_ALARM`).

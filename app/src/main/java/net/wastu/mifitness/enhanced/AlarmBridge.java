@@ -23,7 +23,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 /**
- * Makes the band ring for Google Clock alarms.
+ * Makes the band ring for Google Clock alarms and expired timers.
  *
  * Mi Fitness only rings the band for phone alarms when Xiaomi's own clock binds to
  * AlarmConsoleService and calls onAlert. Google Clock never does, so we watch for its
@@ -89,6 +89,8 @@ final class AlarmBridge {
             return false;
         }
         Notification n = sbn.getNotification();
+        XposedBridge.log(TAG + "Clock notification " + sbn.getKey() + " category=" + (n != null ? n.category : null)
+                + " fullScreen=" + (n != null && n.fullScreenIntent != null) + " channel=" + (n != null ? n.getChannelId() : null));
         // The ringing alarm is the full-screen alarm notification; "upcoming alarm" ones have no full-screen intent
         return n != null && Notification.CATEGORY_ALARM.equals(n.category) && n.fullScreenIntent != null;
     }
@@ -256,11 +258,26 @@ final class AlarmBridge {
         throw new IllegalStateException("no outer AlarmConsoleService field on " + binder.getClass());
     }
 
-    /** Google Clock puts the alarm label in the title; the text is just "<time> • Swipe to stop". */
+    /**
+     * Alarms: Google Clock puts the label in the title (the text is just "<time> • Swipe to stop").
+     * Timers: MetricStyle with no title; the label is in the first android.metrics entry.
+     */
     private static String labelOf(Notification n) {
         Bundle extras = n.extras;
-        CharSequence title = extras != null ? extras.getCharSequence(Notification.EXTRA_TITLE) : null;
-        return title != null && title.length() > 0 ? title.toString() : "Alarm";
+        if (extras == null) {
+            return "Alarm";
+        }
+        CharSequence title = extras.getCharSequence(Notification.EXTRA_TITLE);
+        if (title != null && title.length() > 0) {
+            return title.toString();
+        }
+        Object metrics = extras.get("android.metrics");
+        if (metrics instanceof java.util.List && !((java.util.List<?>) metrics).isEmpty()
+                && ((java.util.List<?>) metrics).get(0) instanceof Bundle) {
+            CharSequence label = ((Bundle) ((java.util.List<?>) metrics).get(0)).getCharSequence("label");
+            return label != null && label.length() > 0 ? label.toString() : "Timer";
+        }
+        return "Alarm";
     }
 
     private static PendingIntent findClockAction(Notification n, boolean snooze) {
@@ -271,7 +288,8 @@ final class AlarmBridge {
         Notification.Action dismissAction = null;
         for (Notification.Action action : n.actions) {
             String title = action.title != null ? action.title.toString().toLowerCase(Locale.ROOT) : "";
-            if (title.contains("snooze")) {
+            // Timers have [Stop, Add 1 min]; treat "add a minute" as the band's snooze
+            if (title.contains("snooze") || title.startsWith("add") || title.startsWith("+")) {
                 snoozeAction = action;
             } else if (title.contains("dismiss") || title.contains("stop")) {
                 dismissAction = action;
